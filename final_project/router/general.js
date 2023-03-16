@@ -4,23 +4,10 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
-const doesExist = (username)=>{
-    let userswithsamename = users.filter((user)=>{
-      return user.username === username
-    });
-    if(userswithsamename.length > 0){
-      return true;
-    } else {
-      return false;
-    }
-  }
-
 public_users.post("/register", (req,res) => {
-  console.log(req.body)
   const { username, password } = req.body;
-  console.log({ username, password })
   if (username && password) {
-    if (!doesExist(username)) {
+    if (!isValid(username)) {
       users.push({username, password});
       return res.status(200).json({message: "User successfully registred. Now you can login"});
     } else {
@@ -30,32 +17,44 @@ public_users.post("/register", (req,res) => {
   return res.status(404).json({message: "Unable to register user."});
 });
 
+
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  return res.status(200).json({message: books});
+public_users.get('/', async (req, res) => {
+    try {
+        const message = books;
+        res.status(200).json({ message });
+    } catch (error) {
+        res.status(400).json({ message });
+    }
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  const { isbn } = req.params;
-  const book = books[isbn];
-  return res.status(200).json({message: book});
+public_users.get('/isbn/:isbn', async (req, res) => {
+  try {
+    const { isbn } = req.params;
+    const book = await books[isbn];
+    return res.status(200).json({message: book});
+
+  } catch(error) {
+    res.status(404).json({message: 'book not found'});
+  }
  });
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
+public_users.get('/author/:author', async (req, res) => {
   const { author } = req.params;
-  const booksArray = Object.values(books);
+  const allBooks = await books
+  const booksArray = Object.values(allBooks);
   const authorsBooks = booksArray.filter((b) => b.author === author);
   return res.status(200).json({message: authorsBooks});
 });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
+public_users.get('/title/:title', async (req, res) => {
   const { title } = req.params;
-  const booksArray = Object.values(books);
+  const allBooks = await books;
+  const booksArray = Object.values(allBooks);
   const titledBooks = booksArray.filter((b) => b.title === title);
-  console.log({title, booksArray, titledBooks})
   return res.status(200).json({message: titledBooks});
 });
 
