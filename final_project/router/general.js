@@ -22,7 +22,6 @@ public_users.post("/register", (req,res) => {
 public_users.get('/', async (req, res) => {
     try {
         const allBooks = await books
-        const message
         res.status(200).json({ message: allBooks });
     } catch (error) {
         res.status(400).json({ message: 'cannot get books' });
@@ -30,15 +29,17 @@ public_users.get('/', async (req, res) => {
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn', async (req, res) => {
-  try {
-    const { isbn } = req.params;
-    const book = await books[isbn];
-    return res.status(200).json({message: book});
-  } catch(error) {
-    res.status(404).json({message: 'book not found'});
-  }
- });
+public_users.get('/isbn/:isbn', (req, res) => {
+  const { isbn } = req.params;
+  books.then(allBooks => {
+    const book = allBooks[isbn];
+    if (book) {
+      res.status(200).json({message: book}); 
+    } else {
+      res.status(404).json({message: 'book not found'});
+    }
+  });
+});
   
 // Get book details based on author
 public_users.get('/author/:author', async (req, res) => {
